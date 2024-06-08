@@ -7,7 +7,7 @@
 #include <3ds/ndsp/ndsp.h>
 #include <3ds/services/fs.h>
 
-#define RACKET_SPEED 3.0f
+#define RACKET_SPEED 4.0f
 #define ANGLE 60
 #define FLAT_ANGLE 180
 #define BALL_SIDE 25.0f
@@ -20,6 +20,7 @@
 #define SPEED_INCREMENT 0.1f
 #define MIN_SPEED 0.75f
 #define ADDED_SPEED 0.5f
+#define MIDDLE_OF_RACKET 34.0f // In reality 75/2 = 37.5 but it tends to corrupt the racket sprite
 
 C2D_Image images[MAX_IMAGES];
 C2D_SpriteSheet spriteSheet;
@@ -83,12 +84,12 @@ void ballInit(float* x, float* y, float speed[2]) {
         speed[1] = sin(rand()%(FLAT_ANGLE+ANGLE + (FLAT_ANGLE-ANGLE) + 1) -(FLAT_ANGLE-ANGLE));
     }
     // If too slow
-    if (((speed[0] < MIN_SPEED) & (speed[1] > 0.0f)) || ((speed[0] > -MIN_SPEED) & (speed[1] < 0.0f))) {
+    if (((speed[0] < MIN_SPEED) & (speed[0] > 0.0f)) || ((speed[0] > -MIN_SPEED) & (speed[0] < 0.0f))) {
         if ((speed[0] < MIN_SPEED) & (speed[0] > 0.0f)) speed[0] += ADDED_SPEED;
         else speed[0] -= ADDED_SPEED;
     }
     if (((speed[1] < MIN_SPEED) & (speed[1] > 0.0f)) || ((speed[1] > -MIN_SPEED) & (speed[1] < 0.0f))) {
-        if ((speed[1] < MIN_SPEED) & (speed[1] > 0.0f)) speed[0] += ADDED_SPEED;
+        if ((speed[1] < MIN_SPEED) & (speed[1] > 0.0f)) speed[1] += ADDED_SPEED;
         else speed[1] -= ADDED_SPEED;
     }
     *x = SCREEN_SIZE_LENGTH/2.0f - BALL_SIDE/2.0f; // Ball positions
@@ -131,8 +132,8 @@ int main(int argc, char **argv) {
     float speed[2];   // Movement speed
     float x;
     float y;
-    float y_racket_1 = SCREEN_SIZE_WIDTH/2.0f - RACKET_LENGTH/2.0f;
-    float y_racket_2 = SCREEN_SIZE_WIDTH/2.0f - RACKET_LENGTH/2.0f;
+    float y_racket_1 = SCREEN_SIZE_WIDTH/2.0f - MIDDLE_OF_RACKET;
+    float y_racket_2 = SCREEN_SIZE_WIDTH/2.0f - MIDDLE_OF_RACKET;
     int score_player_1 = 0;
     int score_player_2 = 0;
 
@@ -184,7 +185,7 @@ int main(int argc, char **argv) {
 
         // Collision left racket
         if (x <= RACKET_WIDTH) {
-            if ((y + (BALL_SIDE/2.0f) >= y_racket_1) & (y - (BALL_SIDE/2.0f) <= y_racket_1 + RACKET_LENGTH)) {
+            if ((y + (BALL_SIDE/2.0f) >= y_racket_1) & (y + (BALL_SIDE/2.0f) <= y_racket_1 + RACKET_LENGTH)) {
                 speed[0] = -speed[0];
                 collision = true;
             } else {
@@ -195,7 +196,7 @@ int main(int argc, char **argv) {
 
         // Collision right racket
         if (x + RACKET_WIDTH >= SCREEN_SIZE_LENGTH - RACKET_WIDTH) {
-            if ((y + (BALL_SIDE/2.0f) >= y_racket_2) & (y - (BALL_SIDE/2.0f) <= y_racket_2 + RACKET_LENGTH)) {
+            if ((y + (BALL_SIDE/2.0f) >= y_racket_2) & (y + (BALL_SIDE/2.0f) <= y_racket_2 + RACKET_LENGTH)) {
                 speed[0] = -speed[0];
                 collision = true;
             } else {
@@ -225,14 +226,15 @@ int main(int argc, char **argv) {
         {
             // Starting render on top screen
             C2D_SceneBegin(top);
+            C2D_TargetClear(top, C2D_Color32(0x00, 0x00, 0x00, 0x00));
 
             // Draw images
-            C2D_DrawImageAt(images[3], 0.0f, 0.0f, DEPTH, NULL, 1.0f, 1.0f); // Map
-            C2D_DrawImageAt(images[0], 0.0f, y_racket_1, DEPTH, NULL, 1.0f, 1.0f); // Left racket
-            C2D_DrawImageAt(images[1], SCREEN_SIZE_LENGTH - RACKET_WIDTH, y_racket_2, DEPTH, NULL, 1.0f, 1.0f); // Right racket
-            C2D_DrawText(&g_dynamicText, C2D_AtBaseline | C2D_WithColor, 220.0f, 40.0f, 1.0f, 1.0f, 1.0f, C2D_Color32(0xE8, 0xE9, 0xE3, 0xFF)); // Scores
-            C2D_DrawText(&g_dynamicText_2, C2D_AtBaseline | C2D_WithColor, 166.0f, 40.0f, 1.0f, 1.0f, 1.0f, C2D_Color32(0xE8, 0xE9, 0xE3, 0xFF));
-            C2D_DrawImageAt(images[2], x, y, DEPTH, NULL, 1.0f, 1.0f); // Ball
+            C2D_DrawImageAt(images[0], 0.0f, 0.0f, DEPTH, NULL, 1.0f, 1.0f); // Map
+            C2D_DrawText(&g_dynamicText, C2D_AtBaseline | C2D_WithColor, 220.0f, 40.0f, DEPTH, 1.0f, 1.0f, C2D_Color32(0xE8, 0xE9, 0xE3, 0xFF)); // Scores
+            C2D_DrawText(&g_dynamicText_2, C2D_AtBaseline | C2D_WithColor, 166.0f, 40.0f, DEPTH, 1.0f, 1.0f, C2D_Color32(0xE8, 0xE9, 0xE3, 0xFF));
+            C2D_DrawImageAt(images[1], 0.0f, y_racket_1, DEPTH, NULL, 1.0f, 1.0f); // Left racket
+            C2D_DrawImageAt(images[2], SCREEN_SIZE_LENGTH - RACKET_WIDTH, y_racket_2, DEPTH, NULL, 1.0f, 1.0f); // Right racket
+            C2D_DrawImageAt(images[3], x, y, DEPTH, NULL, 1.0f, 1.0f); // Ball
         }
 
         // End of render
