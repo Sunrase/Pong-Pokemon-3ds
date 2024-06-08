@@ -1,5 +1,6 @@
 Just a pong but with the theme of Pokemon.
-Two mode available :
+
+Two modes available :
 1 - Player vs Player
 2 - Player vs Wall
 
